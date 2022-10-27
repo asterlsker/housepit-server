@@ -1,0 +1,9 @@
+[submodule "housepit-api-server"]
+	path = housepit-api-server
+	url = git@github.com:asterlsker/housepit-api-server.git
+[submodule "housepit-admin-server"]
+	path = housepit-admin-server
+	url = git@github.com:asterlsker/housepit-admin-server.git
+[submodule "housepit-core"]
+	path = housepit-core
+	url = git@github.com:asterlsker/housepit-core.git
