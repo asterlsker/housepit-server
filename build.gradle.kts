@@ -1,8 +1,11 @@
+import com.google.common.collect.Iterables.all
+import com.google.protobuf.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.springframework.boot") version "2.7.4"
     id("io.spring.dependency-management") version "1.0.14.RELEASE"
+    id("com.google.protobuf") version "0.8.18" apply false
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.jpa") version "1.6.21"
@@ -21,15 +24,17 @@ allprojects {
     }
 }
 
-val excludeSubproject = listOf("client");
-configure(subprojects.filter{ it.name !in excludeSubproject}) {
-    apply(plugin = "org.springframework.boot")
-    apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
 
-    allOpen{
+val excludeSubproject = listOf("client");
+configure(subprojects.filter { it.name !in excludeSubproject }) {
+
+        apply(plugin = "org.springframework.boot")
+        apply(plugin = "io.spring.dependency-management")
+        apply(plugin = "org.jetbrains.kotlin.jvm")
+        apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+        apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
+
+    allOpen {
         annotation("javax.persistence.Entity")
         annotation("javax.persistence.MappedSuperclass")
         annotation("javax.persistence.Embeddable")
@@ -50,6 +55,8 @@ configure(subprojects.filter{ it.name !in excludeSubproject}) {
         // test
         testImplementation("org.springframework.boot:spring-boot-starter-test")
     }
+
+
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
@@ -76,5 +83,52 @@ project("housepit-core") {
 
     dependencies {
 
+    }
+}
+
+project("client:auth") {
+
+    apply(plugin = "com.google.protobuf")
+
+    dependencies {
+        implementation("io.grpc:grpc-kotlin-stub:${rootProject.properties["grpcKotlinVersion"]}")
+        implementation("io.grpc:grpc-protobuf:${rootProject.properties["grpcProtoVersion"]}")
+        implementation("com.google.protobuf:protobuf-kotlin:${rootProject.properties["grpcVersion"]}")
+    }
+
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDirs(
+                    "build/generated/source/proto/main/java",
+                    "build/generated/source/proto/main/kotlin"
+                )
+            }
+        }
+    }
+
+    protobuf {
+        protoc {
+            artifact = "com.google.protobuf:protoc:${rootProject.properties["grpcVersion"]}"
+        }
+        plugins {
+            id("grpc") {
+                artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.properties["grpcProtoVersion"]}"
+            }
+            id("grpckt"){
+                artifact = "io.grpc:protoc-gen-grpc-kotlin:${rootProject.properties["grpcKotlinVersion"]}:jdk8@jar"
+            }
+        }
+        generateProtoTasks {
+            all().forEach {
+                it.plugins {
+                    id("grpc")
+                    id("grpckt")
+                }
+                it.builtins {
+                    id("kotlin")
+                }
+            }
+        }
     }
 }
