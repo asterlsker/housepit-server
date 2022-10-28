@@ -45,10 +45,13 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+        implementation("org.springframework.boot:spring-boot-starter-validation")
 
         // kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
 
         // database
         runtimeOnly("com.h2database:h2")
@@ -91,6 +94,9 @@ project("client:auth") {
     apply(plugin = "com.google.protobuf")
 
     dependencies {
+        // submodule
+        implementation(project(":housepit-core"))
+        // grpc
         implementation("io.grpc:grpc-kotlin-stub:${rootProject.properties["grpcKotlinVersion"]}")
         implementation("io.grpc:grpc-protobuf:${rootProject.properties["grpcProtoVersion"]}")
         implementation("com.google.protobuf:protobuf-kotlin:${rootProject.properties["grpcVersion"]}")
