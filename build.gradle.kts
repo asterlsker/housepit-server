@@ -9,6 +9,7 @@ plugins {
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.jpa") version "1.6.21"
+    idea
 }
 
 java.sourceCompatibility = JavaVersion.VERSION_17
@@ -46,10 +47,12 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
         implementation("org.springframework.boot:spring-boot-starter-validation")
+        implementation("org.springframework.boot:spring-boot-starter-webflux")
 
         // kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
 
@@ -97,20 +100,26 @@ project("client:auth") {
         // submodule
         implementation(project(":housepit-core"))
         // grpc
+        implementation("io.grpc:grpc-stub:${rootProject.properties["grpcProtoVersion"]}")
         implementation("io.grpc:grpc-kotlin-stub:${rootProject.properties["grpcKotlinVersion"]}")
         implementation("io.grpc:grpc-protobuf:${rootProject.properties["grpcProtoVersion"]}")
         implementation("com.google.protobuf:protobuf-kotlin:${rootProject.properties["grpcVersion"]}")
+        runtimeOnly("io.grpc:grpc-netty:${rootProject.ext["grpcProtoVersion"]}")
     }
 
     sourceSets {
         getByName("main") {
             java {
                 srcDirs(
+//                    "build/generated/source/proto/main/grpc",
+                    "build/generated/source/proto/main/grpcKt",
                     "build/generated/source/proto/main/java",
-                    "build/generated/source/proto/main/kotlin"
+                    "build/generated/source/proto/main/kotlin",
+
                 )
             }
         }
+
     }
 
     protobuf {
@@ -135,6 +144,12 @@ project("client:auth") {
                     id("kotlin")
                 }
             }
+        }
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
         }
     }
 }

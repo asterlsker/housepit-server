@@ -1,6 +1,11 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 
+//option java_multiple_files = true;
+option java_package = "com.asterlsker.grpc.auth";
+
+package auth;
+
 service AuthService {
   rpc SignIn(SignInRequest) returns (SignInResponse){};
   rpc Link(LinkRequest) returns (google.protobuf.Empty){};
@@ -41,6 +46,7 @@ message RefreshRequest{
 }
 message RefreshResponse{
   string access_token = 1;
+  string refresh_token = 2;
 }
 // Enums
 enum Provider {
