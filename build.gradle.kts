@@ -1,6 +1,6 @@
-import com.google.common.collect.Iterables.all
 import com.google.protobuf.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
     id("org.springframework.boot") version "2.7.4"
@@ -25,14 +25,14 @@ allprojects {
 }
 
 
-val excludeSubproject = listOf("client");
+val excludeSubproject = listOf("client")
 configure(subprojects.filter { it.name !in excludeSubproject }) {
 
-        apply(plugin = "org.springframework.boot")
-        apply(plugin = "io.spring.dependency-management")
-        apply(plugin = "org.jetbrains.kotlin.jvm")
-        apply(plugin = "org.jetbrains.kotlin.plugin.spring")
-        apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
 
     allOpen {
         annotation("javax.persistence.Entity")
@@ -45,18 +45,32 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+        implementation("org.springframework.boot:spring-boot-starter-validation")
+        implementation("org.springframework.boot:spring-boot-starter-webflux")
 
         // kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
         // database
         runtimeOnly("com.h2database:h2")
+
+        // Annotation Processing Tool
+        annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
         // test
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.springframework.boot:spring-boot-starter-test") {
+//            exclude(group = "org.mockito")
+        }
+        testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
+        testImplementation("io.kotest:kotest-runner-junit5:${rootProject.properties["kotestVersion"]}")
+        testImplementation("io.kotest:kotest-assertions-core:${rootProject.properties["kotestVersion"]}")
+        testImplementation("io.kotest:kotest-property:${rootProject.properties["kotestVersion"]}")
+        testImplementation("io.mockk:mockk:1.13.2")
+        testImplementation("io.grpc:grpc-testing:1.50.2")
     }
-
-
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
@@ -87,35 +101,44 @@ project("housepit-core") {
 }
 
 project("client:auth") {
-
     apply(plugin = "com.google.protobuf")
 
     dependencies {
+        // submodule
+        implementation(project(":housepit-core"))
+
+        // grpc
+        implementation("io.grpc:grpc-stub:${rootProject.properties["grpcVersion"]}")
         implementation("io.grpc:grpc-kotlin-stub:${rootProject.properties["grpcKotlinVersion"]}")
-        implementation("io.grpc:grpc-protobuf:${rootProject.properties["grpcProtoVersion"]}")
-        implementation("com.google.protobuf:protobuf-kotlin:${rootProject.properties["grpcVersion"]}")
+        implementation("io.grpc:grpc-protobuf:${rootProject.properties["grpcVersion"]}")
+        implementation("com.google.protobuf:protobuf-kotlin:${rootProject.properties["protobufVersion"]}")
+        runtimeOnly("io.grpc:grpc-netty:${rootProject.ext["grpcVersion"]}")
+
     }
 
     sourceSets {
         getByName("main") {
             java {
                 srcDirs(
+                    "build/generated/source/proto/main/grpc",
+                    "build/generated/source/proto/main/grpckt",
                     "build/generated/source/proto/main/java",
-                    "build/generated/source/proto/main/kotlin"
+                    "build/generated/source/proto/main/kotlin",
                 )
             }
         }
     }
 
+
     protobuf {
         protoc {
-            artifact = "com.google.protobuf:protoc:${rootProject.properties["grpcVersion"]}"
+            artifact = "com.google.protobuf:protoc:${rootProject.properties["protobufVersion"]}"
         }
         plugins {
             id("grpc") {
-                artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.properties["grpcProtoVersion"]}"
+                artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.properties["grpcVersion"]}"
             }
-            id("grpckt"){
+            id("grpckt") {
                 artifact = "io.grpc:protoc-gen-grpc-kotlin:${rootProject.properties["grpcKotlinVersion"]}:jdk8@jar"
             }
         }
@@ -129,6 +152,12 @@ project("client:auth") {
                     id("kotlin")
                 }
             }
+        }
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
         }
     }
 }

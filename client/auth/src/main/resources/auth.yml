@@ -1,0 +1,5 @@
+auth:
+  grpc:
+    url: localhost
+    port: 50051
+---
