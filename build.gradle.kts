@@ -53,8 +53,11 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
 
         // database
+        implementation("com.vladmihalcea:hibernate-types-52:2.20.0")
+        implementation("org.postgresql:postgresql:42.5.0")
         runtimeOnly("com.h2database:h2")
 
         // Annotation Processing Tool
@@ -62,7 +65,7 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
 
         // test
         testImplementation("org.springframework.boot:spring-boot-starter-test") {
-//            exclude(group = "org.mockito")
+            exclude(group = "org.mockito")
         }
         testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
         testImplementation("io.kotest:kotest-runner-junit5:${rootProject.properties["kotestVersion"]}")
