@@ -1,6 +1,5 @@
 import com.google.protobuf.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
     id("org.springframework.boot") version "2.7.4"
@@ -8,7 +7,7 @@ plugins {
     id("com.google.protobuf") version "0.8.18" apply false
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
-    kotlin("plugin.jpa") version "1.6.21"
+    kotlin("plugin.jpa") version "1.6.21" apply false
 }
 
 java.sourceCompatibility = JavaVersion.VERSION_17
@@ -24,6 +23,11 @@ allprojects {
     }
 }
 
+val rdbmsProjects = listOf(
+    project(":infra:rdbms"),
+    project(":housepit-domain")
+)
+
 
 val excludeSubproject = listOf("client")
 configure(subprojects.filter { it.name !in excludeSubproject }) {
@@ -32,7 +36,6 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
 
     allOpen {
         annotation("javax.persistence.Entity")
@@ -44,7 +47,6 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         // starter
         implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.springframework.boot:spring-boot-starter-web")
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
         implementation("org.springframework.boot:spring-boot-starter-validation")
         implementation("org.springframework.boot:spring-boot-starter-webflux")
 
@@ -55,10 +57,6 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
         implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
 
-        // database
-        implementation("com.vladmihalcea:hibernate-types-52:2.20.0")
-        implementation("org.postgresql:postgresql:42.5.0")
-        runtimeOnly("com.h2database:h2")
 
         // Annotation Processing Tool
         annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
@@ -87,21 +85,7 @@ configure(subprojects.filter { it.name !in excludeSubproject }) {
     }
 }
 
-project("housepit-api-server") {
-    dependencies {
-        // module
-        implementation(project(":housepit-core"))
-        implementation(project(":client:auth"))
 
-    }
-}
-
-project("housepit-core") {
-
-    dependencies {
-
-    }
-}
 
 project("client:auth") {
     apply(plugin = "com.google.protobuf")
@@ -162,5 +146,18 @@ project("client:auth") {
         kotlinOptions {
             freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
         }
+    }
+}
+
+configure(rdbmsProjects) {
+    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
+
+    dependencies {
+        // starter
+        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+        // database
+        implementation("com.vladmihalcea:hibernate-types-52:2.20.0")
+        implementation("org.postgresql:postgresql:42.5.0")
+        runtimeOnly("com.h2database:h2")
     }
 }
