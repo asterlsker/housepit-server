@@ -1,15 +1,15 @@
-package com.asterlsker.housepit.domain.meet.service
+package com.asterlsker.housepit.domain.meet
 
-import com.asterlsker.housepit.domain.gyul.Gyul
 import com.asterlsker.housepit.domain.meet.command.CreateMeetCommand
-import com.asterlsker.housepit.domain.meet.criteria.GetPrivateMeetsCriteria
-import com.asterlsker.housepit.domain.meet.criteria.GetPublicMeetsCriteria
+import com.asterlsker.housepit.domain.meet.command.GetMeetCriteria
+import com.asterlsker.housepit.domain.meet.command.GetPrivateMeetsCriteria
+import com.asterlsker.housepit.domain.meet.command.GetPublicMeetsCriteria
 import com.asterlsker.housepit.domain.meet.command.dto.MeetScheduleDto
+import com.asterlsker.housepit.domain.meet.dto.MeetDetailDto
+import com.asterlsker.housepit.domain.meet.dto.MeetResult
+import com.asterlsker.housepit.domain.meet.dto.MeetsResult
 import com.asterlsker.housepit.domain.meet.entity.Meet
-import com.asterlsker.housepit.domain.meet.entity.MeetSchedule
 import com.asterlsker.housepit.domain.meet.repository.MeetRepository
-import com.asterlsker.housepit.domain.meet.result.MeetResult
-import com.asterlsker.housepit.domain.meet.result.MeetsResult
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -22,13 +22,6 @@ class MeetService(private val meetRepository: MeetRepository) {
      * 새로운 모임 생성
      */
     @Transactional
-    fun createMeet(memberId: String, title: String, content: Gyul?, schedules: List<MeetSchedule>) {
-        val meet = Meet(memberId = memberId, title = title, content = content)
-        schedules.forEach { meet.addSchedule(it) }
-        meetRepository.save(meet)
-    }
-
-    @Transactional
     fun handleCreateMeetCommand(command: CreateMeetCommand) {
         val meet = Meet(memberId = command.memberId, title = command.title, content = command.content)
         MeetScheduleDto.toEntity(command.schedules).forEach { meet.addSchedule(it) }
@@ -36,24 +29,30 @@ class MeetService(private val meetRepository: MeetRepository) {
     }
 
     @Transactional
-    fun handleGetMeets(criteria: GetPrivateMeetsCriteria): MeetsResult {
+    fun handleGetMeetCriteria(criteria: GetMeetCriteria): MeetDetailDto.Result {
+        val meet = meetRepository.findByMeetId(criteria.meetId) ?: throw Exception()
+        return MeetDetailDto.Result.of(meet)
+    }
+
+    @Transactional
+    fun handleGetMeetsCriteria(criteria: GetPrivateMeetsCriteria): MeetsResult {
         val meets = meetRepository.findByMemberIdOrderByCreatedAt(
             memberId = criteria.memberId,
             pageable = PageRequest.of(criteria.offset, criteria.limit)
         )
-        return handleGetMeetsCore(meets)
+        return handleGetMeetsCriteriaCore(meets)
     }
 
     @Transactional
-    fun handleGetMeets(criteria: GetPublicMeetsCriteria): MeetsResult {
+    fun handleGetMeetsCriteria(criteria: GetPublicMeetsCriteria): MeetsResult {
         val meets = meetRepository.findByOrderByCreatedAt(
             pageable = PageRequest.of(criteria.offset, criteria.limit)
         )
-        return handleGetMeetsCore(meets)
+        return handleGetMeetsCriteriaCore(meets)
     }
 
     // duplication
-    private fun handleGetMeetsCore(meets: Page<Meet>): MeetsResult {
+    private fun handleGetMeetsCriteriaCore(meets: Page<Meet>): MeetsResult {
         val data = meets.content.map { MeetResult.of(it) }
         return MeetsResult(
             meets = data,

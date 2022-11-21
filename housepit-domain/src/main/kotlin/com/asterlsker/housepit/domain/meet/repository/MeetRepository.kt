@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface MeetRepository : JpaRepository<Meet, Long> {
+    fun findByMeetId(meetId: String): Meet?
     fun findByMemberIdOrderByCreatedAt(memberId: String, pageable: Pageable): Page<Meet>
     fun findByOrderByCreatedAt(pageable: Pageable): Page<Meet>
 }

@@ -1,4 +1,4 @@
-package com.asterlsker.housepit.domain.meet.result
+package com.asterlsker.housepit.domain.meet.dto
 
 import com.asterlsker.housepit.auth.domain.model.Member
 import com.asterlsker.housepit.domain.meet.entity.Meet
@@ -12,7 +12,7 @@ data class MeetResult(
     companion object {
         fun of(entity: Meet): MeetResult {
             return MeetResult(
-                meetId = entity.id!!,
+                meetId = entity.meetId.toString(),
                 member = Member(
                     memberId = entity.memberId,
                 ),

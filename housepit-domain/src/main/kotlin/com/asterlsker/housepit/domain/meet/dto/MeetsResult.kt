@@ -1,4 +1,4 @@
-package com.asterlsker.housepit.domain.meet.result
+package com.asterlsker.housepit.domain.meet.dto
 
 data class MeetsResult(
     val meets: List<MeetResult>,

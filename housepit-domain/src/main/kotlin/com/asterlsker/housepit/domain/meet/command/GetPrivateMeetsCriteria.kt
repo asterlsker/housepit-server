@@ -1,4 +1,4 @@
-package com.asterlsker.housepit.domain.meet.criteria
+package com.asterlsker.housepit.domain.meet.command
 
 data class GetPrivateMeetsCriteria(
     val memberId: String,

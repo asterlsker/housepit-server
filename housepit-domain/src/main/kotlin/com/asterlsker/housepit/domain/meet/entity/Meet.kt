@@ -4,29 +4,30 @@ import com.asterlsker.housepit.domain.gyul.Gyul
 import com.asterlsker.housepit.domain.meet.type.MeetScheduleStatus
 import com.asterlsker.housepit.rdbms.base.BaseEntity
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType
-import org.hibernate.annotations.GenericGenerator
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
+import java.util.*
 import javax.persistence.*
 
 @Entity
 @Table(name = "meet")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-data class Meet(
-    @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
-    @Column(name = "id", nullable = false)
-    val id: String? = null,
+class Meet(
     val memberId: String,
     val title: String,
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb")
-    val content: Gyul? = null
+    val content: Gyul? = null,
 ) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    val id: Long? = null
+
+    @Column(unique = true)
+    var meetId: UUID = UUID.randomUUID()
     val deleted: Boolean = false
 
-    //    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "meet")
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "meet")
     private val meetSchedule = mutableListOf<MeetSchedule>()
 
@@ -51,5 +52,7 @@ data class Meet(
         }
         return count
     }
+
+
 }
 

@@ -8,15 +8,17 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "meet_schedule")
-data class MeetSchedule(
+class MeetSchedule(
+    val startAt: LocalDateTime,
+    val endAt: LocalDateTime,
+    val requiredPeople: Int
+) : BaseEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    val id: Long? = null,
-    val startAt: LocalDateTime,
-    val endAt: LocalDateTime,
-    val requiredPeople: Int,
-) : BaseEntity() {
+    val id: Long? = null
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meet_id", referencedColumnName = "id")
     var meet: Meet? = null
@@ -27,7 +29,10 @@ data class MeetSchedule(
     val deleted: Boolean = false
 
     // handler
-    // logic
 
+    // filter
+    fun isNotCanceled(): Boolean = status != MeetScheduleStatus.CANCEL
+
+    // logic
 }
 
